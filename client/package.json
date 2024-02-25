@@ -1,8 +1,4 @@
 {
-  "dependencies": {
-    "axios": "^1.6.2",
-    "nodemon": "^3.0.2"
-=======
   "name": "orcanet-market-js",
   "version": "0.1.0",
   "private": true,
