@@ -41,17 +41,23 @@ function main() {
   } else {
     target = 'localhost:50051';
   }
-  var client = new hello_proto.FileSender(target,
-                                       grpc.credentials.createInsecure());
-  var user;
-  if (argv._.length > 0) {
-    user = argv._[0];
+  var client = new hello_proto.FileSender(target, grpc.credentials.createInsecure());
+  var issue = new hello_proto.ArgvChecker(target, grpc.credentials.createInsecure());
+
+  // var content;
+
+  // console.log(argv._.length);
+
+  if (argv._.length != 4) {
+    // content = argv._[0];
+    issue.argvIssue();
+    console.log("\nplease provide more information");
   } else {
-    user = 'world';
+    client.addFile({hash: argv._[0], ip: argv._[1], port: argv._[2] , price: argv._[3]}, function(err, response) {
+      console.log(response.message);
+    });
   }
-  client.addFile({hash: "hash", price: "100"}, function(err, response) {
-    console.log(response.message);
-  });
+  
 
 }
 
