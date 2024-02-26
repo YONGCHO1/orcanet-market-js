@@ -22,36 +22,60 @@ var parseArgs = require('minimist');
 var grpc = require('@grpc/grpc-js');
 var protoLoader = require('@grpc/proto-loader');
 var packageDefinition = protoLoader.loadSync(
-    PROTO_PATH,
-    {keepCase: true,
-     longs: String,
-     enums: String,
-     defaults: true,
-     oneofs: true
-    });
+  PROTO_PATH,
+  {
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true
+  });
 var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
 
 function main() {
-  var argv = parseArgs(process.argv.slice(2), {
-    string: 'target'
-  });
-  var target;
-  if (argv.target) {
-    target = argv.target;
-  } else {
-    target = 'localhost:50051';
+
+  if (process.argv.length <= 2) {
+    console.log("\nPlease provide a file.");
   }
-  var client = new hello_proto.FileSender(target,
-                                       grpc.credentials.createInsecure());
-  var user;
-  if (argv._.length > 0) {
-    user = argv._[0];
-  } else {
-    user = 'world';
+  else {
+    var argv = parseArgs(process.argv.slice(2), {
+      string: 'target'
+    });
+    var target;
+    if (argv.target) {
+      target = argv.target;
+    } else {
+      target = 'localhost:50051';
+    }
+
+    var client = new hello_proto.FileSender(target, grpc.credentials.createInsecure());
+
+    if (argv._.length == 4) {
+      client.addFile({ hash: argv._[0], ip: argv._[1], port: argv._[2], price: argv._[3] }, function (err, response) {
+        console.log(response.message);
+      });
+    }
+    else {
+      console.log("\nPlease provide enough information for the file.");
+    }
+
   }
-  client.addFile({hash: "hash", price: "100"}, function(err, response) {
-    console.log(response.message);
-  });
+
+  // var issue = new hello_proto.ArgvChecker(target, grpc.credentials.createInsecure());
+
+  // var content;
+
+  // console.log(argv._.length);
+
+  // if (argv._.length != 4) {
+  //   // content = argv._[0];
+  //   // console.log("\nplease provide more information");
+  //   // issue.argvIssue();
+  // } else {
+  //   client.addFile({ hash: argv._[0], ip: argv._[1], port: argv._[2], price: argv._[3] }, function (err, response) {
+  //     console.log(response.message);
+  //   });
+  // }
 
 }
 

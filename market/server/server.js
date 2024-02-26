@@ -21,13 +21,14 @@ var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
 var grpc = require('@grpc/grpc-js');
 var protoLoader = require('@grpc/proto-loader');
 var packageDefinition = protoLoader.loadSync(
-    PROTO_PATH,
-    {keepCase: true,
-     longs: String,
-     enums: String,
-     defaults: true,
-     oneofs: true
-    });
+  PROTO_PATH,
+  {
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true
+  });
 var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
 
 
@@ -40,21 +41,24 @@ var Market = [
 /**
  * Implements the SayHello RPC method.
  */
-function sayHello(call, callback) {
-  callback(null, {message: 'Hello ' + call.request.name});
+function argvIssue() {
+  // console.log('\nPlease provide enough information');
+
 }
 
-function addFile(call, callback){
+function addFile(call, callback) {
   let hash = call.request.hash;
   let price = call.request.price;
-  let newItem = new File(hash, "ip", "port", price);
+  let ip = call.request.ip;
+  let port = call.request.port;
+  let newItem = new File(hash, ip, port, price);
   Market.push(newItem);
   // console.log(newItem);
   printMarket();
-  callback(null, {message: "File Added Successfully"});
+  callback(null, { message: "File " + hash + " from " + ip + ":" + port + " with price: $" + price + " per MB added successfully" });
 }
 
-function printMarket(){
+function printMarket() {
   console.log("\n")
   Market.forEach(file => {
     console.log(file);
@@ -67,14 +71,14 @@ function printMarket(){
  */
 function main() {
   var server = new grpc.Server();
-  server.addService(hello_proto.Greeter.service, {sayHello: sayHello});
-  server.addService(hello_proto.FileSender.service, {addFile: addFile});
+  server.addService(hello_proto.ArgvChecker.service, { argvIssue: argvIssue });
+  server.addService(hello_proto.FileSender.service, { addFile: addFile });
   server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
     server.start();
   });
 
-  
-  
+
+
   // Market.push();
 
 }
