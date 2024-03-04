@@ -81,16 +81,19 @@ function main() {
 
       // this allows client to register a file with the server by giving user info and a file
       client.registerFile({ user: newUser, fileHash: hashedFile }, function (err, response) {
-        console.log(err);
-        console.log(response); // I think this is empty because in the proto file there is an empty response/no response
-        // console.log(response.message);
+        console.log("error: "+err);
         console.log("RegisterFile Response");
       });
-      console.log(hashedFile);
+
+      console.log(hashedFile+ ": { id: " + newUser.id
+      + ", name: " + newUser.name
+      + ", ip: " + newUser.ip
+      + " port: " + newUser.port
+      + " price: " + newUser.price + " }");
 
       // this allows client to get the users with the given file hash
       client.checkHolders({fileHash: hashedFile}, function(err, response){
-        console.log(err);
+        console.log("error: "+err);
         console.log(response);
       });
 

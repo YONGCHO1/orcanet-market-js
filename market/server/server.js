@@ -37,12 +37,8 @@ var userFileMap = new Map();
 
 // Function that prints the HashMap
 function printMarket() {
-console.log("---------------inside printMarket--------------------");  
-  // Market.forEach(file => {
-  //   console.log(file);
-  // })
-  // console.log("\n");
-  // console.log("\n");
+console.log("---------------inside printMarket-------------------");  
+
   userFileMap.forEach(function (value, key) {
     console.log(key + ": { id: " + value[0].id
       + ", name: " + value[0].name
@@ -50,16 +46,6 @@ console.log("---------------inside printMarket--------------------");
       + " port: " + value[0].port
       + " price: " + value[0].price + " }");
   })
-
-  console.log(userFileMap);
-
-  // for (let [key, value] of userFileMap) {
-  //   console.log(key + ": { id: " + value.id
-  //     + ", name: " + value.name
-  //     + ", ip: " + value.ip
-  //     + " port: " + value.port
-  //     + " price: " + value.price + " }");
-  // }
 }
 
 function printHolders(hold) {
@@ -97,44 +83,31 @@ function registerFile(call, callback) {
       + newUser.price + " per MB added successfully"
   }); // ?
 
-  // console.log("test");
 }
 
 // CheckHolders should take a fileHash and looks it up in the hashmap and returns the list of users
 function checkHolders(call, callback) {
-  console.log("-----------------check holders----------------------");
+  console.log("------------------check holders----------------------");
   const fileHash = call.request.fileHash;
-
-  const user = userFileMap.get(fileHash)
+  const user = userFileMap.get(fileHash);
   
-  const holders = []
-  holders.push(user);
+  const holders = [];
 
-  for (let [key, value] of userFileMap) {
-    console.log(key + " is " + value[0].name);
-}
+  user.forEach(x => {
+    holders.push(x);
+  })
 
-  // const response = new market_proto.HoldersResponse();
-  // response.holders = user; 
-  // console.log(`User got: ${user}`);
   console.log("Users Found");
   printHolders(holders);
   callback(null, {holders: holders});
 }
 
-/**
- * Starts an RPC server that receives requests for the Greeter service at the
- * sample server port
- */
 function main() {
   const server = new grpc.Server();
   server.addService(market_proto.Market.service, { RegisterFile: registerFile, CheckHolders: checkHolders });
   server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
     server.start();
   });
-
-  // TODO: Might need to change map into a multiMap that allows multiple values for keys so that there are 
-  // multiple users for the same hash if those users also own the file 
 
 }
 
