@@ -28,7 +28,6 @@ service Greeter {
 
   rpc SayHelloStreamReply (HelloRequest) returns (stream HelloReply) {}
 
-  
 }
 
 service FileSender {
