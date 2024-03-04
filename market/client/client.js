@@ -37,6 +37,16 @@ var packageDefinition = protoLoader.loadSync(
 // var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
 var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 
+function hashing(file) {
+  var hash = 0;
+  for (var i = 0; i < file.length; i++) {
+      var char = file.charCodeAt(i);
+      hash = ((hash<<5)-hash)+char;
+      hash = hash & hash;
+  }
+  return hash;
+}
+
 function main() {
 
   if (process.argv.length <= 2) {
@@ -54,43 +64,35 @@ function main() {
     }
 
     // var client = new hello_proto.FileSender(target, grpc.credentials.createInsecure());
-    var client = new market_proto.FileSender(target, grpc.credentials.createInsecure());
+    // var client = new market_proto.FileSender(target, grpc.credentials.createInsecure());
 
-    client.User = {
+    var hashedFile = hashing(argv._[0]);
+    
+    var newUser = {
       Id:    userID,
-      Name:  username,
-      Ip:    "localhost",
-      Port:  416320,
-      Price: price,
+      Name:  argv._[1],
+      Ip:    argv._[2],
+      Port:  argv._[3],
+      Price: argv._[4],
     }
 
-    if (argv._.length == 4) {
-      client.addFile({ hash: argv._[0], ip: argv._[1], port: argv._[2], price: argv._[3] }, function (err, response) {
-        console.log(response.message);
-      });
+    // client.User = {
+    //   Id:    userID,
+    //   Name:  username,
+    //   Ip:    "localhost",
+    //   Port:  416320,
+    //   Price: price,
+    // }
+
+
+    if (argv._.length == 5) {
+      market_proto.RegisterFileRequest(newUser, hashedFile);
+      console.log(hashedFile);
     }
     else {
       console.log("\nPlease provide enough information for the file.");
     }
-
   }
-
-  // var issue = new hello_proto.ArgvChecker(target, grpc.credentials.createInsecure());
-
-  // var content;
-
-  // console.log(argv._.length);
-
-  // if (argv._.length != 4) {
-  //   // content = argv._[0];
-  //   // console.log("\nplease provide more information");
-  //   // issue.argvIssue();
-  // } else {
-  //   client.addFile({ hash: argv._[0], ip: argv._[1], port: argv._[2], price: argv._[3] }, function (err, response) {
-  //     console.log(response.message);
-  //   });
-  // }
-
 }
 
 main();
