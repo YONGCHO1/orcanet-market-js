@@ -38,6 +38,7 @@ var packageDefinition = protoLoader.loadSync(
 // var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
 var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 
+// Function that hashes the given file
 function hashing(file) {
   var hash = 0;
   for (var i = 0; i < file.length; i++) {
@@ -71,7 +72,7 @@ function main() {
     // var hashedFile = argv._[0];
 
     var newUser = {
-      id: 1,
+      id: 1, // will be replaced by id given from Peer Node team
       name: argv._[1],
       ip: argv._[2],
       port: argv._[3],
@@ -92,13 +93,23 @@ function main() {
       // console.log(newUser.Name);
       // console.log(client.User);
       // client.registerFile(newUser, hashedFile);
+
+      // this allows client to register a file with the server by giving user info and a file
       client.registerFile({ user: newUser, fileHash: hashedFile }, function (err, response) {
         console.log(err);
-        console.log(response);
+        console.log(response); // I think this is empty because in the proto file there is an empty response/no response
         // console.log(response.message);
         console.log("RegisterFile Response");
       });
       console.log(hashedFile);
+
+      // this allows client to get the users with the given file hash
+      client.checkHolders({fileHash: hashedFile}, function(err, response){
+        console.log(err);
+        console.log(response);
+      });
+
+      // TODO: Need to add interface to let a user actually input information so that they can register files and check holders
     }
     else {
       console.log("\nPlease provide enough information for the file.");
