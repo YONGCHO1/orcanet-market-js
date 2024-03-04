@@ -36,6 +36,10 @@ var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 // const grpcObject = grpc.loadPackageDefinition(packageDefinition);
 // const protoPackage = grpcObject.packageName; // Get the package name from proto file
 
+// Map that stores User and hash
+var userFileMap = new Map();
+
+
 /**
  * Implements the SayHello RPC method.
  */
@@ -56,19 +60,63 @@ function addFile(call, callback) {
   callback(null, { message: "File " + hash + " from " + ip + ":" + port + " with price: $" + price + " per MB added successfully" });
 }
 
+// Function that prints the HashMap
 function printMarket() {
   console.log("\n")
-  Market.forEach(file => {
-    console.log(file);
+  // Market.forEach(file => {
+  //   console.log(file);
+  // })
+  // console.log("\n");
+  // console.log("\n");
+  userFileMap.forEach(function (value, key) {
+    console.log(key + ": { id: " + value.id
+      + ", name: " + value.name
+      + ", ip: " + value.ip
+      + " port: " + value.port
+      + " price: " + value.price + " }");
   })
 }
 
-function registerFile(call, callback){
-  console.log("test");
+// This function registers a file and user into the servers HashMap 
+function registerFile(call, callback) {
+
+  let newUser = call.request.user;
+  let fileHash = call.request.fileHash;
+
+  // console.log(call);
+  // console.log(call.request);
+  // console.log("Hashed File: " + fileHash);
+  // console.log("Username:" + newUser.name);
+  // console.log("IP Address:" + newUser.ip);
+  // console.log("Port:" + newUser.port);
+  // console.log("Price:" + newUser.price);
+
+  userFileMap.set(fileHash, newUser);
+  // Market.push(new UserHash(newUser, fileHash));
+
+  printMarket();
+  callback(null, {
+    message: "File " + fileHash + " from " + newUser.name + "'s "
+      + newUser.ip + ":" + newUser.port + " with price: $"
+      + newUser.price + " per MB added successfully"
+  }); // ?
+
+  // console.log("test");
 }
 
-function checkHolders(call, callback){
-  console.log("test");
+// CheckHolders should take a fileHash and looks it up in the hashmap and returns the list of users
+function checkHolders(call, callback) {
+  const fileHash = call.request.fileHash;
+
+  const user = userFileMap.get(fileHash)
+  const holders = []
+  holders.push(user);
+
+  // const response = new market_proto.HoldersResponse();
+  // response.holders = user; 
+  // console.log(`User got: ${user}`);
+  console.log("Users Found");
+  callback(null, {holders: holders});
 }
 
 /**
@@ -76,18 +124,22 @@ function checkHolders(call, callback){
  * sample server port
  */
 function main() {
-  var server = new grpc.Server();
-  server.addService(market_proto.Market.service, {RegisterFile: registerFile, CheckHolders: checkHolders});
+  const server = new grpc.Server();
+  server.addService(market_proto.Market.service, { RegisterFile: registerFile, CheckHolders: checkHolders });
   // server.addService(market_proto.Market.service, { CheckHolders: checkHolders });
   // server.addService(market_proto.FileSender.service, { addFile: addFile });
   server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
     server.start();
   });
 
+  // TODO: Might need to change map into a multiMap that allows multiple values for keys so that there are 
+  // multiple users for the same hash if those users also own the file 
 
+}
 
-  // Market.push();
-
+function UserHash(user, fileHash) {
+  this.user = user;
+  this.fileHash = fileHash;
 }
 
 function File(hash, ip, port, price) {
