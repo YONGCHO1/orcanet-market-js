@@ -16,9 +16,7 @@
  *
  */
 
-// var PROTO_PATH = __dirname + 'test.txt';
 var PROTO_PATH = '../market.proto';
-
 
 var grpc = require('@grpc/grpc-js');
 var protoLoader = require('@grpc/proto-loader');
@@ -33,48 +31,40 @@ var packageDefinition = protoLoader.loadSync(
   });
 var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 
-// const grpcObject = grpc.loadPackageDefinition(packageDefinition);
-// const protoPackage = grpcObject.packageName; // Get the package name from proto file
 
 // Map that stores User and hash
 var userFileMap = new Map();
 
-
-/**
- * Implements the SayHello RPC method.
- */
-function argvIssue() {
-  console.log('\nPlease provide enough information');
-
-}
-
-function addFile(call, callback) {
-  let hash = call.request.hash;
-  let price = call.request.price;
-  let ip = call.request.ip;
-  let port = call.request.port;
-  let newItem = new File(hash, ip, port, price);
-  Market.push(newItem);
-  // console.log(newItem);
-  printMarket();
-  callback(null, { message: "File " + hash + " from " + ip + ":" + port + " with price: $" + price + " per MB added successfully" });
-}
-
 // Function that prints the HashMap
 function printMarket() {
-  console.log("\n")
+console.log("---------------inside printMarket--------------------");  
   // Market.forEach(file => {
   //   console.log(file);
   // })
   // console.log("\n");
   // console.log("\n");
   userFileMap.forEach(function (value, key) {
-    console.log(key + ": { id: " + value.id
-      + ", name: " + value.name
-      + ", ip: " + value.ip
-      + " port: " + value.port
-      + " price: " + value.price + " }");
+    console.log(key + ": { id: " + value[0].id
+      + ", name: " + value[0].name
+      + ", ip: " + value[0].ip
+      + " port: " + value[0].port
+      + " price: " + value[0].price + " }");
   })
+
+  console.log(userFileMap);
+
+  // for (let [key, value] of userFileMap) {
+  //   console.log(key + ": { id: " + value.id
+  //     + ", name: " + value.name
+  //     + ", ip: " + value.ip
+  //     + " port: " + value.port
+  //     + " price: " + value.price + " }");
+  // }
+}
+
+function printHolders(hold) {
+  console.log("---------------inside printHolders--------------------");
+  console.log(hold);
 }
 
 // This function registers a file and user into the servers HashMap 
@@ -82,17 +72,23 @@ function registerFile(call, callback) {
 
   let newUser = call.request.user;
   let fileHash = call.request.fileHash;
+  console.log("------------------register file---------------------");
 
-  // console.log(call);
-  // console.log(call.request);
-  // console.log("Hashed File: " + fileHash);
-  // console.log("Username:" + newUser.name);
-  // console.log("IP Address:" + newUser.ip);
-  // console.log("Port:" + newUser.port);
-  // console.log("Price:" + newUser.price);
+  let multi = [];
+  multi.push(newUser);
+  
+  if (userFileMap.has(fileHash)) {
+    console.log("File already exist");
+    
+    let newMap = multi.concat(userFileMap.get(fileHash));
+    
+    userFileMap.set(fileHash, newMap);
+  }
+  else {
+    console.log("File doesn't exist");
+    userFileMap.set(fileHash, multi);
+  }
 
-  userFileMap.set(fileHash, newUser);
-  // Market.push(new UserHash(newUser, fileHash));
 
   printMarket();
   callback(null, {
@@ -106,16 +102,23 @@ function registerFile(call, callback) {
 
 // CheckHolders should take a fileHash and looks it up in the hashmap and returns the list of users
 function checkHolders(call, callback) {
+  console.log("-----------------check holders----------------------");
   const fileHash = call.request.fileHash;
 
   const user = userFileMap.get(fileHash)
+  
   const holders = []
   holders.push(user);
+
+  for (let [key, value] of userFileMap) {
+    console.log(key + " is " + value[0].name);
+}
 
   // const response = new market_proto.HoldersResponse();
   // response.holders = user; 
   // console.log(`User got: ${user}`);
   console.log("Users Found");
+  printHolders(holders);
   callback(null, {holders: holders});
 }
 
@@ -126,8 +129,6 @@ function checkHolders(call, callback) {
 function main() {
   const server = new grpc.Server();
   server.addService(market_proto.Market.service, { RegisterFile: registerFile, CheckHolders: checkHolders });
-  // server.addService(market_proto.Market.service, { CheckHolders: checkHolders });
-  // server.addService(market_proto.FileSender.service, { addFile: addFile });
   server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
     server.start();
   });
@@ -137,16 +138,5 @@ function main() {
 
 }
 
-function UserHash(user, fileHash) {
-  this.user = user;
-  this.fileHash = fileHash;
-}
-
-function File(hash, ip, port, price) {
-  this.hash = hash;
-  this.ip = ip;
-  this.port = port;
-  this.price = price;
-}
 
 main();

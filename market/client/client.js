@@ -22,7 +22,6 @@
 // var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
 // var PROTO_PATH = __dirname + './market.proto';
 var PROTO_PATH = '../market.proto';
-var PROTO_PATH = '../market.proto';
 
 var parseArgs = require('minimist');
 var grpc = require('@grpc/grpc-js');
@@ -36,7 +35,7 @@ var packageDefinition = protoLoader.loadSync(
     defaults: true,
     oneofs: true
   });
-// var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
+
 var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 
 // Function that hashes the given file
@@ -66,11 +65,9 @@ function main() {
       target = 'localhost:50051';
     }
 
-    // var client = new hello_proto.FileSender(target, grpc.credentials.createInsecure());
     var client = new market_proto.Market(target, grpc.credentials.createInsecure());
 
     var hashedFile = hashing(argv._[0]);
-    // var hashedFile = argv._[0];
 
     var newUser = {
       id: 1, // will be replaced by id given from Peer Node team
@@ -80,20 +77,7 @@ function main() {
       price: argv._[4],
     }
 
-    // client.User = {
-    //   Id:    1,
-    //   Name:  "hi",
-    //   Ip:    "localhost",
-    //   Port:  416320,
-    //   Price: 10,
-    // }
-
-
     if (argv._.length == 5) {
-      // console.log(newUser);
-      // console.log(newUser.Name);
-      // console.log(client.User);
-      // client.registerFile(newUser, hashedFile);
 
       // this allows client to register a file with the server by giving user info and a file
       client.registerFile({ user: newUser, fileHash: hashedFile }, function (err, response) {
