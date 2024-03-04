@@ -16,7 +16,12 @@
  *
  */
 
-var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
+
+// const userID = require("uuid/v4");
+
+// var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
+// var PROTO_PATH = __dirname + './market.proto';
+var PROTO_PATH = 'C:/Users/alexd/OneDrive/Desktop/Blue Whale Market-JS/orcanet-market-js/market/market.proto';
 
 var parseArgs = require('minimist');
 var grpc = require('@grpc/grpc-js');
@@ -30,7 +35,18 @@ var packageDefinition = protoLoader.loadSync(
     defaults: true,
     oneofs: true
   });
-var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
+// var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
+var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
+
+function hashing(file) {
+  var hash = 0;
+  for (var i = 0; i < file.length; i++) {
+      var char = file.charCodeAt(i);
+      hash = ((hash<<5)-hash)+char;
+      hash = hash & hash;
+  }
+  return hash;
+}
 
 function main() {
 
@@ -48,35 +64,41 @@ function main() {
       target = 'localhost:50051';
     }
 
-    var client = new hello_proto.FileSender(target, grpc.credentials.createInsecure());
+    // var client = new hello_proto.FileSender(target, grpc.credentials.createInsecure());
+    var client = new market_proto.Market(target, grpc.credentials.createInsecure());
 
-    if (argv._.length == 4) {
-      client.addFile({ hash: argv._[0], ip: argv._[1], port: argv._[2], price: argv._[3] }, function (err, response) {
+    // var hashedFile = hashing(argv._[0]);
+    var hashedFile = argv._[0];
+    
+    var newUser = {
+      Id:    1,
+      Name:  argv._[1],
+      Ip:    argv._[2],
+      Port:  argv._[3],
+      Price: argv._[4],
+    }
+
+    client.User = {
+      Id:    1,
+      Name:  "hi",
+      Ip:    "localhost",
+      Port:  416320,
+      Price: 10,
+    }
+
+
+    if (argv._.length == 5) {
+      // client.registerFile(newUser, hashedFile);
+      client.registerFile({user: newUser, fileHash: hashedFile}, function(err, response) {
         console.log(response.message);
       });
+      console.log(hashedFile);
     }
+
     else {
       console.log("\nPlease provide enough information for the file.");
     }
-
   }
-
-  // var issue = new hello_proto.ArgvChecker(target, grpc.credentials.createInsecure());
-
-  // var content;
-
-  // console.log(argv._.length);
-
-  // if (argv._.length != 4) {
-  //   // content = argv._[0];
-  //   // console.log("\nplease provide more information");
-  //   // issue.argvIssue();
-  // } else {
-  //   client.addFile({ hash: argv._[0], ip: argv._[1], port: argv._[2], price: argv._[3] }, function (err, response) {
-  //     console.log(response.message);
-  //   });
-  // }
-
 }
 
 main();
