@@ -16,7 +16,9 @@
  *
  */
 
-var PROTO_PATH = __dirname + './market.proto';
+// var PROTO_PATH = __dirname + 'test.txt';
+var PROTO_PATH = 'C:/Users/alexd/OneDrive/Desktop/Blue Whale Market-JS/orcanet-market-js/market/market.proto';
+
 
 var grpc = require('@grpc/grpc-js');
 var protoLoader = require('@grpc/proto-loader');
@@ -31,11 +33,14 @@ var packageDefinition = protoLoader.loadSync(
   });
 var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 
+// const grpcObject = grpc.loadPackageDefinition(packageDefinition);
+// const protoPackage = grpcObject.packageName; // Get the package name from proto file
+
 /**
  * Implements the SayHello RPC method.
  */
 function argvIssue() {
-  // console.log('\nPlease provide enough information');
+  console.log('\nPlease provide enough information');
 
 }
 
@@ -58,14 +63,23 @@ function printMarket() {
   })
 }
 
+function registerFile(call, callback){
+  console.log("test");
+}
+
+function checkHolders(call, callback){
+  console.log("test");
+}
+
 /**
  * Starts an RPC server that receives requests for the Greeter service at the
  * sample server port
  */
 function main() {
   var server = new grpc.Server();
-  server.addService(market_proto.ArgvChecker.service, { argvIssue: argvIssue });
-  server.addService(market_proto.FileSender.service, { addFile: addFile });
+  server.addService(market_proto.Market.service, {RegisterFile: registerFile, CheckHolders: checkHolders});
+  // server.addService(market_proto.Market.service, { CheckHolders: checkHolders });
+  // server.addService(market_proto.FileSender.service, { addFile: addFile });
   server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
     server.start();
   });

@@ -17,10 +17,11 @@
  */
 
 
-const userID = require("uuid/v4");
+// const userID = require("uuid/v4");
 
 // var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
-var PROTO_PATH = __dirname + './market.proto';
+// var PROTO_PATH = __dirname + './market.proto';
+var PROTO_PATH = 'C:/Users/alexd/OneDrive/Desktop/Blue Whale Market-JS/orcanet-market-js/market/market.proto';
 
 var parseArgs = require('minimist');
 var grpc = require('@grpc/grpc-js');
@@ -64,31 +65,36 @@ function main() {
     }
 
     // var client = new hello_proto.FileSender(target, grpc.credentials.createInsecure());
-    // var client = new market_proto.FileSender(target, grpc.credentials.createInsecure());
+    var client = new market_proto.Market(target, grpc.credentials.createInsecure());
 
-    var hashedFile = hashing(argv._[0]);
+    // var hashedFile = hashing(argv._[0]);
+    var hashedFile = argv._[0];
     
     var newUser = {
-      Id:    userID,
+      Id:    1,
       Name:  argv._[1],
       Ip:    argv._[2],
       Port:  argv._[3],
       Price: argv._[4],
     }
 
-    // client.User = {
-    //   Id:    userID,
-    //   Name:  username,
-    //   Ip:    "localhost",
-    //   Port:  416320,
-    //   Price: price,
-    // }
+    client.User = {
+      Id:    1,
+      Name:  "hi",
+      Ip:    "localhost",
+      Port:  416320,
+      Price: 10,
+    }
 
 
     if (argv._.length == 5) {
-      market_proto.RegisterFileRequest(newUser, hashedFile);
+      // client.registerFile(newUser, hashedFile);
+      client.registerFile({user: newUser, fileHash: hashedFile}, function(err, response) {
+        console.log(response.message);
+      });
       console.log(hashedFile);
     }
+
     else {
       console.log("\nPlease provide enough information for the file.");
     }
