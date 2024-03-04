@@ -96,7 +96,7 @@ function registerFile(call, callback) {
     message: "File " + fileHash + " from " + newUser.name + "'s "
       + newUser.ip + ":" + newUser.port + " with price: $"
       + newUser.price + " per MB added successfully"
-  });
+  }); // ?
   // console.log("test");
 }
 
