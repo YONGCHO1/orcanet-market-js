@@ -16,7 +16,11 @@
  *
  */
 
-var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
+
+const userID = require("uuid/v4");
+
+// var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
+var PROTO_PATH = __dirname + './market.proto';
 
 var parseArgs = require('minimist');
 var grpc = require('@grpc/grpc-js');
@@ -30,7 +34,8 @@ var packageDefinition = protoLoader.loadSync(
     defaults: true,
     oneofs: true
   });
-var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
+// var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
+var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 
 function main() {
 
@@ -48,7 +53,16 @@ function main() {
       target = 'localhost:50051';
     }
 
-    var client = new hello_proto.FileSender(target, grpc.credentials.createInsecure());
+    // var client = new hello_proto.FileSender(target, grpc.credentials.createInsecure());
+    var client = new market_proto.FileSender(target, grpc.credentials.createInsecure());
+
+    client.User = {
+      Id:    userID,
+      Name:  username,
+      Ip:    "localhost",
+      Port:  416320,
+      Price: price,
+    }
 
     if (argv._.length == 4) {
       client.addFile({ hash: argv._[0], ip: argv._[1], port: argv._[2], price: argv._[3] }, function (err, response) {

@@ -16,7 +16,7 @@
  *
  */
 
-var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
+var PROTO_PATH = __dirname + './market.proto';
 
 var grpc = require('@grpc/grpc-js');
 var protoLoader = require('@grpc/proto-loader');
@@ -29,14 +29,7 @@ var packageDefinition = protoLoader.loadSync(
     defaults: true,
     oneofs: true
   });
-var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
-
-
-var Market = [
-  // new File("hash1", "ip1", "port1", "price1"),
-  // new File("hash2", "ip2", "port2", "price2"),
-  // new File("hash3", "ip3", "port3", "price3"),
-];
+var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 
 /**
  * Implements the SayHello RPC method.
@@ -71,8 +64,8 @@ function printMarket() {
  */
 function main() {
   var server = new grpc.Server();
-  server.addService(hello_proto.ArgvChecker.service, { argvIssue: argvIssue });
-  server.addService(hello_proto.FileSender.service, { addFile: addFile });
+  server.addService(market_proto.ArgvChecker.service, { argvIssue: argvIssue });
+  server.addService(market_proto.FileSender.service, { addFile: addFile });
   server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
     server.start();
   });
