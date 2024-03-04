@@ -17,7 +17,7 @@
  */
 
 // var PROTO_PATH = __dirname + 'test.txt';
-var PROTO_PATH = 'C:/Users/alexd/OneDrive/Desktop/Blue Whale Market-JS/orcanet-market-js/market/market.proto';
+var PROTO_PATH = '../market.proto';
 
 
 var grpc = require('@grpc/grpc-js');
