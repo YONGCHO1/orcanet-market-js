@@ -16,49 +16,93 @@
  *
  */
 
-var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
+
+// const userID = require("uuid/v4");
+
+// var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
+// var PROTO_PATH = __dirname + './market.proto';
+var PROTO_PATH = '../market.proto';
 
 var parseArgs = require('minimist');
 var grpc = require('@grpc/grpc-js');
 var protoLoader = require('@grpc/proto-loader');
 var packageDefinition = protoLoader.loadSync(
-    PROTO_PATH,
-    {keepCase: true,
-     longs: String,
-     enums: String,
-     defaults: true,
-     oneofs: true
-    });
-var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
+  PROTO_PATH,
+  {
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true
+  });
+
+var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
+
+// Function that hashes the given file
+function hashing(file) {
+  var hash = 0;
+  for (var i = 0; i < file.length; i++) {
+    var char = file.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash;
+}
 
 function main() {
-  var argv = parseArgs(process.argv.slice(2), {
-    string: 'target'
-  });
-  var target;
-  if (argv.target) {
-    target = argv.target;
-  } else {
-    target = 'localhost:50051';
+
+  if (process.argv.length <= 2) {
+    console.log("\nPlease provide a file.");
   }
-  var client = new hello_proto.FileSender(target, grpc.credentials.createInsecure());
-  var issue = new hello_proto.ArgvChecker(target, grpc.credentials.createInsecure());
-
-  // var content;
-
-  // console.log(argv._.length);
-
-  if (argv._.length != 4) {
-    // content = argv._[0];
-    issue.argvIssue();
-    console.log("\nplease provide more information");
-  } else {
-    client.addFile({hash: argv._[0], ip: argv._[1], port: argv._[2] , price: argv._[3]}, function(err, response) {
-      console.log(response.message);
+  else {
+    var argv = parseArgs(process.argv.slice(2), {
+      string: 'target'
     });
-  }
-  
+    var target;
+    if (argv.target) {
+      target = argv.target;
+    } else {
+      target = 'localhost:50051';
+    }
 
+    var client = new market_proto.Market(target, grpc.credentials.createInsecure());
+
+    var hashedFile = hashing(argv._[0]);
+
+    var newUser = {
+      id: 1, // will be replaced by id given from Peer Node team
+      name: argv._[1],
+      ip: argv._[2],
+      port: argv._[3],
+      price: argv._[4],
+    }
+
+    if (argv._.length == 5) {
+
+      // this allows client to register a file with the server by giving user info and a file
+      client.registerFile({ user: newUser, fileHash: hashedFile }, function (err, response) {
+        console.log("error: "+err);
+        console.log("RegisterFile Response");
+      });
+
+      console.log(hashedFile+ ": { id: " + newUser.id
+      + ", name: " + newUser.name
+      + ", ip: " + newUser.ip
+      + " port: " + newUser.port
+      + " price: " + newUser.price + " }");
+
+      // this allows client to get the users with the given file hash
+      client.checkHolders({fileHash: hashedFile}, function(err, response){
+        console.log("error: "+err);
+        console.log(response);
+      });
+
+      // TODO: Need to add interface to let a user actually input information so that they can register files and check holders
+    }
+    else {
+      console.log("\nPlease provide enough information for the file.");
+    }
+  }
 }
 
 main();

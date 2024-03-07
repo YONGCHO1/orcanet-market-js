@@ -16,76 +16,100 @@
  *
  */
 
-var PROTO_PATH = __dirname + '/../protos/helloworld.proto';
+var PROTO_PATH = '../market.proto';
 
 var grpc = require('@grpc/grpc-js');
 var protoLoader = require('@grpc/proto-loader');
 var packageDefinition = protoLoader.loadSync(
-    PROTO_PATH,
-    {keepCase: true,
-     longs: String,
-     enums: String,
-     defaults: true,
-     oneofs: true
-    });
-var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
+  PROTO_PATH,
+  {
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true
+  });
+var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 
 
-var Market = [
-  // new File("hash1", "ip1", "port1", "price1"),
-  // new File("hash2", "ip2", "port2", "price2"),
-  // new File("hash3", "ip3", "port3", "price3"),
-];
+// Map that stores User and hash
+var userFileMap = new Map();
 
-/**
- * Implements the SayHello RPC method.
- */
-function argvIssue() {
-  console.log('\nPlease provide enough information');
-}
+// Function that prints the HashMap
+function printMarket() {
+console.log("---------------inside printMarket-------------------");  
 
-function addFile(call, callback){
-  let hash = call.request.hash;
-  let price = call.request.price;
-  let ip = call.request.ip;
-  let port = call.request.port;
-  let newItem = new File(hash, ip, port, price);
-  Market.push(newItem);
-  // console.log(newItem);
-  printMarket();
-  callback(null, {message: "File " + hash + " from " + ip + ":" + port + " with price: $" + price + " per MB added successfully"});
-}
-
-function printMarket(){
-  console.log("\n")
-  Market.forEach(file => {
-    console.log(file);
+  userFileMap.forEach(function (value, key) {
+    console.log(key + ": { id: " + value[0].id
+      + ", name: " + value[0].name
+      + ", ip: " + value[0].ip
+      + " port: " + value[0].port
+      + " price: " + value[0].price + " }");
   })
 }
 
-/**
- * Starts an RPC server that receives requests for the Greeter service at the
- * sample server port
- */
+function printHolders(hold) {
+  console.log("---------------inside printHolders--------------------");
+  console.log(hold);
+}
+
+// This function registers a file and user into the servers HashMap 
+function registerFile(call, callback) {
+
+  let newUser = call.request.user;
+  let fileHash = call.request.fileHash;
+  console.log("------------------register file---------------------");
+
+  let multi = [];
+  multi.push(newUser);
+  
+  if (userFileMap.has(fileHash)) {
+    console.log("File already exist");
+    
+    let newMap = multi.concat(userFileMap.get(fileHash));
+    
+    userFileMap.set(fileHash, newMap);
+  }
+  else {
+    console.log("File doesn't exist");
+    userFileMap.set(fileHash, multi);
+  }
+
+
+  printMarket();
+  callback(null, {
+    message: "File " + fileHash + " from " + newUser.name + "'s "
+      + newUser.ip + ":" + newUser.port + " with price: $"
+      + newUser.price + " per MB added successfully"
+  }); // ?
+
+}
+
+// CheckHolders should take a fileHash and looks it up in the hashmap and returns the list of users
+function checkHolders(call, callback) {
+  console.log("------------------check holders----------------------");
+  const fileHash = call.request.fileHash;
+  const user = userFileMap.get(fileHash);
+  
+  const holders = [];
+
+  user.forEach(x => {
+    holders.push(x);
+  })
+
+  console.log("Users Found");
+  printHolders(holders);
+  callback(null, {holders: holders});
+}
+
 function main() {
-  var server = new grpc.Server();
-  server.addService(hello_proto.ArgvChecker.service, {argvIssue: argvIssue});
-  server.addService(hello_proto.FileSender.service, {addFile: addFile});
+  const server = new grpc.Server();
+  server.addService(market_proto.Market.service, { RegisterFile: registerFile, CheckHolders: checkHolders });
   server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
     server.start();
   });
 
-  
-  
-  // Market.push();
-
 }
 
-function File(hash, ip, port, price) {
-  this.hash = hash;
-  this.ip = ip;
-  this.port = port;
-  this.price = price;
-}
 
 main();
