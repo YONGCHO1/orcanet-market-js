@@ -2,11 +2,13 @@
   "name": "grpc-examples",
   "version": "0.1.0",
   "dependencies": {
+    "@grpc/grpc-js": "^1.8.0",
+    "@grpc/grpc-js-xds": "^1.8.0",
     "@grpc/proto-loader": "^0.6.0",
     "async": "^1.5.2",
     "google-protobuf": "^3.0.0",
-    "@grpc/grpc-js": "^1.8.0",
-    "@grpc/grpc-js-xds": "^1.8.0",
+    "kad": "^2.5.1",
+    "kad-memstore": "^0.0.1",
     "lodash": "^4.6.1",
     "minimist": "^1.2.0"
   }

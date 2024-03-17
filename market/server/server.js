@@ -18,6 +18,7 @@
 
 var PROTO_PATH = '../market.proto';
 var kad = require('kad');
+var MemStore = require('kad-memstore');
 
 var grpc = require('@grpc/grpc-js');
 var protoLoader = require('@grpc/proto-loader');
@@ -34,13 +35,17 @@ var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 
 
 // Map that stores User and hash
-var userFileMap = new Map();
+// var userFileMap = new Map();
+const node = new kad.Node({
+  transport: new kad.HTTPTransport(),
+  storage: MemStore,
+});
 
 // Function that prints the HashMap
 function printMarket() {
 console.log("---------------inside printMarket-------------------");  
 
-  userFileMap.forEach(function (value, key) {
+  node.forEach(function (value, key) {
     console.log(key + ": { id: " + value[0].id
       + ", name: " + value[0].name
       + ", ip: " + value[0].ip
@@ -120,10 +125,7 @@ function registerFile(call, callback) {
   let fileHash = call.request.fileHash;
   console.log("------------------register file---------------------");
 
-  const node = new kad.Node({
-    transport: new kad.HTTPTransport(),
-    storage: kad.storage.MemStore
-  });
+  
 
   let multi = [];
   multi.push(newUser);
@@ -131,35 +133,35 @@ function registerFile(call, callback) {
   putOrUpdateKeyValue(node, fileHash, multi)
 
   // first time to try using kad node
-  node.has(fileHash, (err, exists) => {
-    if (err) {
-      console.error('Error checking key existence:', err);
-    } 
-    else {
-      if (exists) {
-        console.log('Key', key, 'exists in the node.');
-        let newMap = multi.concat(userFileMap.get(fileHash));
+  // node.has(fileHash, (err, exists) => {
+  //   if (err) {
+  //     console.error('Error checking key existence:', err);
+  //   } 
+  //   else {
+  //     if (exists) {
+  //       console.log('Key', key, 'exists in the node.');
+  //       let newMap = multi.concat(userFileMap.get(fileHash));
     
-        userFileMap.set(fileHash, newMap);
-      } 
-      else {
-        console.log('Key', key, 'does not exist in the node.');
-      }
-    }
-  });
+  //       userFileMap.set(fileHash, newMap);
+  //     } 
+  //     else {
+  //       console.log('Key', key, 'does not exist in the node.');
+  //     }
+  //   }
+  // });
   
   // old way to add data
-  if (userFileMap.has(fileHash)) {
-    console.log("File already exist");
+  // if (userFileMap.has(fileHash)) {
+  //   console.log("File already exist");
     
-    let newMap = multi.concat(userFileMap.get(fileHash));
+  //   let newMap = multi.concat(userFileMap.get(fileHash));
     
-    userFileMap.set(fileHash, newMap);
-  }
-  else {
-    console.log("File doesn't exist");
-    userFileMap.set(fileHash, multi);
-  }
+  //   userFileMap.set(fileHash, newMap);
+  // }
+  // else {
+  //   console.log("File doesn't exist");
+  //   userFileMap.set(fileHash, multi);
+  // }
 
 
   
@@ -179,7 +181,7 @@ function registerFile(call, callback) {
 function checkHolders(call, callback) {
   console.log("------------------check holders----------------------");
   const fileHash = call.request.fileHash;
-  const user = userFileMap.get(fileHash);
+  const user = node.get(fileHash);
   
   const holders = [];
 
