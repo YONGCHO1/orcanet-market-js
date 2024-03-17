@@ -18,6 +18,7 @@
 
 var PROTO_PATH = '../market.proto';
 var kad = require('kad');
+var MemStore = require('kad-memstore');
 
 var grpc = require('@grpc/grpc-js');
 var protoLoader = require('@grpc/proto-loader');
@@ -35,6 +36,23 @@ var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
 
 // Map that stores User and hash
 var userFileMap = new Map();
+
+var seed = {
+  address: '127.0.0.1',
+  port: 1338
+};
+
+var node = new kad.Node({
+  // transport: kad.HTTPTransport(),
+  transport: kad.transports.TCP(
+    kad.contacts.AddressPortContact({
+      address: '127.0.0.1',
+      port: 1337
+    })
+  ),
+  storage: MemStore()
+});
+
 
 // Function that prints the HashMap
 function printMarket() {
@@ -120,15 +138,17 @@ function registerFile(call, callback) {
   let fileHash = call.request.fileHash;
   console.log("------------------register file---------------------");
 
-  const node = new kad.Node({
-    transport: new kad.HTTPTransport(),
-    storage: kad.storage.MemStore
-  });
+
 
   let multi = [];
   multi.push(newUser);
 
-  putOrUpdateKeyValue(node, fileHash, multi)
+  // putOrUpdateKeyValue(node, fileHash, multi)
+
+  node.connect(seed, function(err) {
+    node.put(fileHash, newUser, callback);
+  })
+  
 
   // first time to try using kad node
   node.has(fileHash, (err, exists) => {
@@ -137,13 +157,13 @@ function registerFile(call, callback) {
     } 
     else {
       if (exists) {
-        console.log('Key', key, 'exists in the node.');
+        console.log('Key', fileHash, 'exists in the node.');
         let newMap = multi.concat(userFileMap.get(fileHash));
     
         userFileMap.set(fileHash, newMap);
       } 
       else {
-        console.log('Key', key, 'does not exist in the node.');
+        console.log('Key', fileHash, 'does not exist in the node.');
       }
     }
   });
@@ -161,9 +181,6 @@ function registerFile(call, callback) {
     userFileMap.set(fileHash, multi);
   }
 
-
-  
-
   printMarket();
   callback(null, {
     message: "File " + fileHash + " from " + newUser.name + "'s "
@@ -174,18 +191,17 @@ function registerFile(call, callback) {
 }
 
 
-
 // CheckHolders should take a fileHash and looks it up in the hashmap and returns the list of users
 function checkHolders(call, callback) {
   console.log("------------------check holders----------------------");
-  const fileHash = call.request.fileHash;
-  const user = userFileMap.get(fileHash);
+  // const fileHash = call.request.fileHash;
+  // const user = userFileMap.get(fileHash);
   
   const holders = [];
 
-  user.forEach(x => {
-    holders.push(x);
-  })
+  // user.forEach(x => {
+  //   holders.push(x);
+  // })
 
   console.log("Users Found");
   printHolders(holders);

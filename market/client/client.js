@@ -77,7 +77,9 @@ function main() {
       price: argv._[4],
     }
 
-    if (argv._.length == 5) {
+    console.log(argv._.length);
+
+    if (argv._.length === 5) {
 
       // this allows client to register a file with the server by giving user info and a file
       client.registerFile({ user: newUser, fileHash: hashedFile }, function (err, response) {
@@ -92,10 +94,10 @@ function main() {
       + " price: " + newUser.price + " }");
 
       // this allows client to get the users with the given file hash
-      client.checkHolders({fileHash: hashedFile}, function(err, response){
-        console.log("error: "+err);
-        console.log(response);
-      });
+      // client.checkHolders({fileHash: hashedFile}, function(err, response){
+      //   console.log("error: "+err);
+      //   console.log(response);
+      // });
 
       // TODO: Need to add interface to let a user actually input information so that they can register files and check holders
     }
