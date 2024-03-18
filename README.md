@@ -1,6 +1,7 @@
-# Getting Start
+# Installation
+'npm install' in the market directory
 
-1. Open Two terminals.
-2. Get into client and server folder in market folder for each terminal.
-3. Type "node server.js" in the server terminal.
-4. Type "node client.js [file name] [Username] [IP address] [Port Number] [Price per Mb]" in the client terminal.
+# Getting Start
+1. Get into the server directory on terminal.
+2. Type 'node transport.js' 
+3. You can see that other peers are discovered and connected.
