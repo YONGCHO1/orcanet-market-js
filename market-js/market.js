@@ -1,3 +1,6 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
 import { createLibp2p } from 'libp2p'
 import { bootstrap } from '@libp2p/bootstrap'
 import { tcp } from '@libp2p/tcp'
@@ -13,6 +16,22 @@ import { multiaddr } from '@multiformats/multiaddr'
 // const bootstrapPeers1 = ['/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
 //                         '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN']; // your bootstrap peers
 
+var PROTO_PATH = './market.proto';
+
+var grpc = require('@grpc/grpc-js');
+var protoLoader = require('@grpc/proto-loader');
+var packageDefinition = protoLoader.loadSync(
+    PROTO_PATH,
+    {
+        keepCase: true,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true
+    });
+var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
+
+
 const bootstrapPeers = [];
 
 const makeNode = async () => {
@@ -24,9 +43,10 @@ const makeNode = async () => {
         streamMuxers: [mplex()],
         connectionEncryption: [noise()],
         peerDiscovery: [mdns()],
+        // peerDiscovery: [bootstrap()],
         services: {
             kadDHT: kadDHT({
-              kBucketSize: 20
+                kBucketSize: 20
             }),
         }
     });
@@ -41,19 +61,17 @@ async function main() {
 
     console.log(argv[1]);
 
-
-    switch(argv[0]) {
+    switch (argv[0]) {
         case '-bootstrap':
             if (argv[1] === undefined)
                 break;
             else
                 // add bootstrap node through process
                 bootstrapPeers.push(argv[1]);
-                break;
+            break;
         case '-clientMode':
 
     }
-
 
     // Create new node and start it
     const node = await makeNode();
@@ -74,7 +92,7 @@ async function main() {
             const peerInfo = await node.dial(peerAddr, {
                 signal: AbortSignal.timeout(10_000)
             });
-            
+
             console.log('Connected to bootstrap peer:', peerInfo.id.toString());
             return peerInfo;
         } catch (error) {
@@ -129,7 +147,7 @@ async function main() {
 
     // Your putValue and searchKey logic goes here
 
-    await new Promise(() => {}); // Keep the program running
+    await new Promise(() => { }); // Keep the program running
 }
 
 main().catch((error) => {
