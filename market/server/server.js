@@ -17,8 +17,6 @@
  */
 
 var PROTO_PATH = '../market.proto';
-var kad = require('kad');
-var MemStore = require('kad-memstore');
 
 var grpc = require('@grpc/grpc-js');
 var protoLoader = require('@grpc/proto-loader');
