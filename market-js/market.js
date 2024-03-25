@@ -8,8 +8,6 @@ import { mplex } from '@libp2p/mplex'
 import { noise } from '@chainsafe/libp2p-noise'
 import { kadDHT } from '@libp2p/kad-dht'
 import { mdns } from '@libp2p/mdns'
-import { CID } from 'multiformats/cid'
-import crypto from 'node:crypto'
 import { multiaddr } from '@multiformats/multiaddr'
 
 
@@ -30,7 +28,6 @@ var packageDefinition = protoLoader.loadSync(
         oneofs: true
     });
 var market_proto = grpc.loadPackageDefinition(packageDefinition).market;
-
 
 const bootstrapPeers = [];
 
@@ -55,6 +52,108 @@ const makeNode = async () => {
     return nodes;
 }
 
+
+// Create new node and start it
+const node = await makeNode();
+
+// Put or update values to corresponding key
+function putOrUpdateKeyValue(node, cid, value) {
+    node.contentRouting.get(cid, (err, existingValue) => {
+        // The key(CID) doesn't exist in DHT node
+        if (err) {
+            console.log('First time to register the file');
+            node.contentRouting.put(cid, value, (err) => {
+                if (err) {
+                console.error('Error registering value:', err);
+                } 
+                else {
+                console.log('Value uploaded successfully for key', cid);
+                }
+            })
+        } 
+
+        // The key(CID) exists in DHT node
+        else {
+          // Update existing value with new value (might be needed to change to add with existing value)
+          const updatedValue = Array.isArray(existingValue) ? [...existingValue, ...value] : [existingValue, ...value];
+          node.contentRouting.put(cid, updatedValue, (err) => {
+            if (err) {
+              console.error('Error updating value:', err);
+            } 
+            else {
+              console.log('Value updated successfully for key', cid);
+            }
+          });
+        }
+    });
+}
+
+// Check provider based on provided key
+function checkProvider(node, cid) {
+    node.contentRouting.get(cid, (err, existingValue) => {
+        // The key(CID) doesn't exist in DHT node
+        if (err) {
+            console.error('Error retrieving existing value:', err);
+            return;
+        } 
+
+        // The key(CID) exists in DHT node
+        else {
+          return existingValue;
+        }
+    });
+}
+
+// This function registers a file and user into the servers HashMap 
+function registerFile(call, callback) {
+
+    let newUser = call.request.user;
+    let cid = call.request.fileHash;
+    console.log("------------------register file---------------------");
+  
+  
+  
+    let multi = [];
+    multi.push(newUser);
+  
+    putOrUpdateKeyValue(node, cid, multi)
+  
+    
+    // // old way to add data
+    // if (userFileMap.has(fileHash)) {
+    //   console.log("File already exist");
+      
+    //   let newMap = multi.concat(userFileMap.get(fileHash));
+      
+    //   userFileMap.set(fileHash, newMap);
+    // }
+    // else {
+    //   console.log("File doesn't exist");
+    //   userFileMap.set(fileHash, multi);
+    // }
+  
+    // printMarket();
+    // callback(null, {
+    //   message: "File " + fileHash + " from " + newUser.name + "'s "
+    //     + newUser.ip + ":" + newUser.port + " with price: $"
+    //     + newUser.price + " per MB added successfully"
+    // }); // ?
+    callback(null, {});
+}
+
+// CheckHolders should take a fileHash and looks it up in the hashmap and returns the list of users
+function checkHolders(call, callback) {
+    console.log("------------------check holders----------------------");
+    const cid = call.request.fileHash;
+    // const user = userFileMap.get(fileHash);
+
+    const holders = checkProvider(node, cid) 
+  
+    console.log("Users Found");
+    printHolders(holders);
+    callback(null, {holders: holders});
+}
+
 async function main() {
 
     var argv = process.argv.slice(2);
@@ -74,7 +173,7 @@ async function main() {
     }
 
     // Create new node and start it
-    const node = await makeNode();
+    // const node = await makeNode();
 
     console.log('Peer ID:', node.peerId.toString());
     console.log('Connect to me on:');
@@ -87,8 +186,6 @@ async function main() {
             console.log("get into try");
             console.log(addr);
             const peerAddr = multiaddr(addr);
-            console.log("peerAddr is " + peerAddr);
-            // const peerInfo = await node.peerInfo.create(undefined, [peerAddr]);
             const peerInfo = await node.dial(peerAddr, {
                 signal: AbortSignal.timeout(10_000)
             });
@@ -112,24 +209,50 @@ async function main() {
 
     // const dht2 = await makeNode();
 
-    // const dht = await createLibp2p({
-    //     addresses: {
-    //         listen: ['/ip4/0.0.0.0/tcp/0']
-    //     },
-    //     transports: [tcp()],
-    //     streamMuxers: [mplex()],
-    //     connectionEncryption: [noise()],
-    //     peerDiscovery: [
-    //         bootstrap({
-    //             list: bootstrapAddresses.filter(addr => addr !== null)
-    //           })
-    //     ],
-    //     services: {
-    //         kadDHT: kadDHT({
-    //           kBucketSize: 20
-    //         }),
-    //     }
-    // });
+    const dht = await createLibp2p({
+        addresses: {
+            listen: ['/ip4/0.0.0.0/tcp/0']
+        },
+        transports: [tcp()],
+        streamMuxers: [mplex()],
+        connectionEncryption: [noise()],
+        peerDiscovery: [
+            bootstrap({
+                list: bootstrapAddresses.filter(addr => addr !== null)
+              })
+        ],
+        services: {
+            kadDHT: kadDHT({
+              kBucketSize: 20
+            }),
+        }
+    });
+
+    if (bootstrapAddresses.length === 0) {
+        await new Promise(() => { }); // Keep the program running
+    }
+    else {
+        const dht = await createLibp2p({
+            addresses: {
+                listen: ['/ip4/0.0.0.0/tcp/0']
+            },
+            transports: [tcp()],
+            streamMuxers: [mplex()],
+            connectionEncryption: [noise()],
+            peerDiscovery: [
+                bootstrap({
+                    list: bootstrapAddresses.filter(addr => addr !== null)
+                  })
+            ],
+            services: {
+                kadDHT: kadDHT({
+                  kBucketSize: 20
+                }),
+            }
+        });
+
+        await dht.start();
+    }
 
 
     // await dht.start();
@@ -145,7 +268,11 @@ async function main() {
     //         .catch((error) => console.error('Failed to connect to peer:', peerInfo.id.toB58String(), error));
     // });
 
-    // Your putValue and searchKey logic goes here
+    const server = new grpc.Server();
+    server.addService(market_proto.Market.service, { RegisterFile: registerFile, CheckHolders: checkHolders });
+    server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
+        server.start();
+    });  
 
     await new Promise(() => { }); // Keep the program running
 }
